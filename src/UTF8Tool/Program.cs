@@ -11,6 +11,12 @@ namespace UTF8Tool
     {
         static void Main(string[] args)
         {
+            if(args.Length == 2 )
+            {
+                Process(args[0], args[1], true);
+                return;
+            }
+
             Console.WriteLine("请输入需要处理的文件夹完整路径(列如D:\\Test):");
             string rootPath = string.Empty;
             do
@@ -32,11 +38,16 @@ namespace UTF8Tool
             Console.WriteLine("是否递归遍历所有子文件夹(默认是,否请输入0)?");
             bool all = Console.ReadLine() != "0";
 
+            Process(rootPath, suffix, all);
+        }
+
+        static void Process(string rootPath, string suffix, bool all)
+        {
             List<string> files = new List<string>();
             foreach (var aSuffix in suffix.Split(','))
             {
                 var searchOption = all ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-                files.AddRange(Directory.GetFiles(rootPath, suffix, searchOption));
+                files.AddRange(Directory.GetFiles(rootPath, aSuffix, searchOption));
             }
             files = files.Distinct().ToList();
             foreach (var aFile in files)
@@ -47,13 +58,17 @@ namespace UTF8Tool
                     Console.WriteLine($"{aFile}文件为空,无法转换已跳过");
                 else
                 {
-                    File.WriteAllText(aFile, content, Encoding.UTF8);
+                    var noBom = new System.Text.UTF8Encoding(false);
+                    var old = File.GetAttributes(aFile);
+                    File.SetAttributes(aFile, FileAttributes.Normal);
+                    File.WriteAllText(aFile, content, noBom);// Encoding.UTF8);
+                    File.SetAttributes(aFile, old);
                     Console.WriteLine($"转换文件成功:{aFile}");
                 }
             }
 
             Console.WriteLine("完成");
-            Console.ReadLine();
+            Console.ReadLine();            
         }
     }
 }
